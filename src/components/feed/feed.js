@@ -99,32 +99,68 @@ const data = [
 // Tabs
 let {width} = Dimensions.get('window');
 let widthTab = width / 3;
-const Tabs = ( {children} ) => {
+const Tabs = ( props ) => {
   return (
     <View style={{height: 50, width: width, borderBottomWidth: 1, justifyContent: 'space-around', alignItems: 'center', flexDirection: 'row', backgroundColor: '#2980b6'}}>
-      {children}
+      {renderChildren(props)}
     </View>
   )
 }
 
-const Tab = ( {title, active = false} ) => {
+function renderChildren(props) {
+  return React.Children.map(props.children, child => {
+    if (child.type === Tab)
+      return React.cloneElement(child, {
+        activeTab: props.activeTab,
+        onPress: props.changeTab
+      })
+    else
+      return child
+  })
+} 
+
+const Tab = ( {activeTab , tabNumber, title, onPress} ) => {
   return (
-    <View style={[{height: 50, width: widthTab, justifyContent: 'center', alignItems: 'center', backgroundColor: '#2980b6'},
-                  active ? {borderBottomWidth: 2, borderBottomColor: '#fff'} : {}
-                ]}>
-      <Text style ={{color: '#fff'}}> {title} </Text>
-    </View>
+    <TouchableHighlight onPress={() => onPress(tabNumber)}>
+      <View style={[styles.Tab, activeTab === tabNumber ? {borderBottomWidth: 2, borderBottomColor: '#fff'} : {}]}>
+        <Text style ={{color: '#fff'}}> {title} </Text>
+      </View>
+    </TouchableHighlight>
   )
 }
-//  /Tabs
 
 export  default class Feed extends Component {
   constructor() {
     super();
     this.state = {
       columns: 2,
-      padding: 5
-      }
+      padding: 5,
+      selectedTab: 1,
+      data: data
+    }
+  }
+
+  setTab = (tabIndex, type) => this.setState({ selectedTab: tabIndex})
+
+  renderSelectedTab = (activeTab) => {
+
+    switch(activeTab) {
+      case 1:
+        return (
+          <Masonry
+            sorted
+            bricks={this.state.data}
+            columns={this.state.columns}/>
+        ) 
+      case 2:
+        return ( 
+          <Text>Second Tab</Text> 
+        )
+      case 3:
+        return ( 
+          <Text>Third Tab</Text> 
+        )
+    }
   }
 
   render() {
@@ -137,29 +173,22 @@ export  default class Feed extends Component {
           </View>
 
           <View>
-            <Tabs>
-              <Tab title='Pastas' active={true}/>
-              <Tab title='Salads'/>
-              <Tab title='Meat'/>
+            <Tabs activeTab={this.state.selectedTab} changeTab={this.setTab}>
+              <Tab title='Pastas' tabNumber={1} />
+              <Tab title='Salads' tabNumber={2} />
+              <Tab title='Meat' tabNumber={3} />
             </Tabs>
           </View>
-
-
-
             <View style={{flex: 2, padding: this.state.padding, backgroundColor: '#fff'}}>
-              <Masonry
-                sorted
-                bricks={data}
-                columns={this.state.columns}/>
+              {this.renderSelectedTab(this.state.selectedTab)}
             </View>
         </Image>
-
     );
   }
-
 }
 
 const styles = StyleSheet.create({
+
   container: {
     flex: 1,
     width: undefined,
@@ -175,5 +204,12 @@ const styles = StyleSheet.create({
   },
   Name: {
     fontSize: 20
+  },
+  Tab: {
+    height: 50, 
+    width: widthTab, 
+    justifyContent: 'center', 
+    alignItems: 'center', 
+    backgroundColor: '#2980b6'
   }
 });
